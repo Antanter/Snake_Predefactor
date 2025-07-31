@@ -1,64 +1,32 @@
 use crate::game::Game;
 
-use ggez::input::keyboard::KeyInput;
-use ggez::{Context, GameResult};
-use ggez::event::{self, EventHandler};
-use ggez::graphics::{Color};
-use ggez::graphics::Canvas;
-use ggez::input::keyboard::{KeyCode};
-use crate::game::snake::Direction;
-
 mod game;
 
-struct MainState {
-    game: Game,
-}
+fn main() {
+    let mut game = Game::start_game(25, 25);
 
-impl MainState {
-    pub fn new(_ctx: &mut Context) -> GameResult<MainState> {
-        let game = Game::start_game(25, 25);
-        Ok(MainState { game })
-    }
-}
+    loop {
+        let state = game.get_state(); // функция, которая кодирует поле игры
+        let action = ai.decide(state);
+        ai.remember_action(action);
 
-impl EventHandler for MainState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        self.game.update();
-        Ok(())
-    }
+        let reward = game.step(action); // обновляет игру и возвращает награду
+        let next_state = game.get_state();
 
-    fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas = Canvas::from_frame(ctx, Color::BLACK);
-        self.game.get_map().render_graphics(ctx, &mut canvas)?;
-        canvas.finish(ctx)?;
-        Ok(())
-    }
+        ai.learn(next_state, reward);
 
-    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, _repeat: bool) -> GameResult {
-        if let Some(keycode) = input.keycode {
-            use Direction::*;
-            let dir = match keycode {
-                KeyCode::Up => Some(Up),
-                KeyCode::Down => Some(Down),
-                KeyCode::Left => Some(Left),
-                KeyCode::Right => Some(Right),
-                _ => None,
-            };
-
-            if let Some(new_dir) = dir {
-                self.game.get_snake().set_dir(new_dir);
-            }
+        if game.is_over() {
+            break;
         }
-        Ok(())
     }
-}
 
-fn main() -> GameResult {
-    let (mut ctx, event_loop) = ggez::ContextBuilder::new("snake_predefactor", "antanter")
-        .window_setup(ggez::conf::WindowSetup::default().title("Snake Predefactor"))
-        .window_mode(ggez::conf::WindowMode::default().dimensions(800.0, 800.0))
-        .build()?;
-
-    let state = MainState::new(&mut ctx)?;
-    event::run(ctx, event_loop, state)
+    for episode in 0..10000 {
+        let mut game = Game::new();
+        while !game.is_over() {
+            let state = game.encode_state();
+            let action = ai.decide(&state);
+            let reward = game.step(action);
+            ai.learn(state, action, reward);
+        }
+    }
 }

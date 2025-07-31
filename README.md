@@ -1,6 +1,6 @@
 # Snake_Predefactor
 
-a simulator of snake which likes apples.
+a simulator of snake which likes apples. written in RUST.
 
 it's going to be handled by one of there AI models (the one which will be the cheapest (china helllooo))
 

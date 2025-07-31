@@ -22,6 +22,10 @@ impl Map {
         Map { width, height, cells }
     }
 
+    pub fn get_size(&self) -> (usize, usize) {
+        (self.width, self.height)
+    }
+
     pub fn refresh_snake(&mut self) {
         for row in &mut self.cells {
             for cell in row {
